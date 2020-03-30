@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 51fb3b70a2ee236865532e0b58353065a3d6b370799bf9bab2d6d0ee31ecce2e
+-- hash: 4e4e753127a3c4d0547b9d7429fc12eb236af575d25e11d9620765400cdf6b33
 
 name:           imagecompressor
 version:        0.1.0.0
@@ -36,7 +36,7 @@ library
       base >=4.7 && <5
   default-language: Haskell2010
 
-executable imagecompressor-exe
+executable imageCompressor
   main-is: Main.hs
   other-modules:
       Paths_imagecompressor
@@ -48,7 +48,7 @@ executable imagecompressor-exe
     , imagecompressor
   default-language: Haskell2010
 
-test-suite imagecompressor-test
+test-suite unit_tests
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:

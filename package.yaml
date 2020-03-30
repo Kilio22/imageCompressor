@@ -26,7 +26,7 @@ library:
   source-dirs: src
 
 executables:
-  imagecompressor-exe:
+  imageCompressor:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -37,7 +37,7 @@ executables:
     - imagecompressor
 
 tests:
-  imagecompressor-test:
+  unit_tests:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
