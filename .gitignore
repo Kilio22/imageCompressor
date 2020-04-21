@@ -1,3 +1,5 @@
 .stack-work/
 *~
 imageCompressor
+/hie.yaml
+/imagecompressor.cabal
