@@ -6,10 +6,10 @@
 --
 
 module DataTypes
-    ( Point
-    , Color
-    , Pixel
-    , Cluster
+    ( Point(..)
+    , Color(..)
+    , Pixel(..)
+    , Cluster(..)
     ) where
 
 import Data.Word (Word8)
