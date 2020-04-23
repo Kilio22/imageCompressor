@@ -35,10 +35,6 @@ main = do
             mbPixels <- getPixelsFromFile file
             let pixels = fromMaybe (error "Bad 'file' paramter") mbPixels
 
-            print nColors
-            print nLimit
-            print pixels
-
             clusters <- compressPixels pixels nColors nLimit
 
             printClusters clusters
