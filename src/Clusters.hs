@@ -11,14 +11,12 @@ module Clusters
     )
 where
 
-import           DataTypes                      ( Color
-                                                , Pixel
-                                                )
+import           DataTypes
 
 data Cluster = Cluster {
     clColor :: Color,
     clPixels :: [Pixel]
-} deriving (Show)
+}
 
 printClusters :: [Cluster] -> IO ()
 printClusters = mapM_ printCluster
@@ -26,6 +24,8 @@ printClusters = mapM_ printCluster
 printCluster :: Cluster -> IO ()
 printCluster cluster = do
     putStrLn "--"
-    print (clColor cluster)
+    printColor (clColor cluster)
+    putStrLn ""
     putStrLn "-"
-    mapM_ print (clPixels cluster)
+    mapM_ printPixelLn (clPixels cluster)
+    where printPixelLn pixel = printPixel pixel >> putStrLn ""
