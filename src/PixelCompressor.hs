@@ -11,7 +11,8 @@ module PixelCompressor
     splitList
     ) where
 
-import DataTypes (Cluster(..), Pixel(..), Color(..))
+import DataTypes (Pixel(..), Color(..))
+import Clusters (Cluster(..))
 import System.Random
 import Data.List
 

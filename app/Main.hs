@@ -17,13 +17,12 @@ import           Data.Ord                       ( Down(..) )
 import           DataTypes                      ( Point(..)
                                                 , Color(..)
                                                 , Pixel(..)
-                                                , Cluster
                                                 )
-import           PixelCompressor                ( compressPixels )
-import           Data.Word                      ( Word8 )
+import           Clusters                       ( Cluster
+                                                , printClusters
+                                                )
 
-printClusters :: [Cluster] -> IO ()
-printClusters = error "Putain mais tamer"
+import           PixelCompressor                ( compressPixels )
 
 main :: IO ()
 main = do
@@ -42,7 +41,7 @@ main = do
 
             clusters <- compressPixels pixels nColors nLimit
 
-            print clusters
+            printClusters clusters
         _ -> error "Wrong arguments"
 
 getPixelsFromFile :: FilePath -> IO (Maybe [Pixel])
@@ -52,7 +51,6 @@ getPixelsFromFile file = do
     let fileMbPixels = fmap readPixel fileLines
     return (sequence fileMbPixels)
 
--- (0, 0) (255, 255, 255)
 readPixel :: String -> Maybe Pixel
 readPixel line = do
     let [pointStr, colorStr] = words line
@@ -62,7 +60,7 @@ readPixel line = do
     -- let point = Point 0 0
     -- let color = Color 0 0 0
     let (px, py) = fromMaybe (error "Bad file format") (readMaybe pointStr :: Maybe (Int, Int))
-    let (cr, cg, cb) = fromMaybe (error "Bad file format") (readMaybe colorStr :: Maybe (Word8, Word8, Word8))
+    let (cr, cg, cb) = fromMaybe (error "Bad file format") (readMaybe colorStr :: Maybe (Int, Int, Int))
     let point = Point px py
     let color = Color cr cg cb
     Just (Pixel point color)

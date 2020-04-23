@@ -9,10 +9,8 @@ module DataTypes
     ( Point(..)
     , Color(..)
     , Pixel(..)
-    , Cluster(..)
-    ) where
-
-import Data.Word (Word8)
+    )
+where
 
 data Point = Point {
     x :: Int,
@@ -20,17 +18,12 @@ data Point = Point {
 } deriving (Show)
 
 data Color = Color {
-    r :: Word8,
-    g :: Word8,
-    b :: Word8
+    r :: Int,
+    g :: Int,
+    b :: Int
 } deriving (Show)
 
 data Pixel = Pixel {
     piPoint :: Point,
     piColor :: Color
-} deriving (Show)
-
-data Cluster = Cluster {
-    clColor :: Color,
-    clPixels :: [Pixel]
 } deriving (Show)
