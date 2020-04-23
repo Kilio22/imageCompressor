@@ -11,7 +11,7 @@ module PixelCompressor
     splitList
     ) where
 
-import DataTypes (Pixel(..), Color(..))
+import DataTypes (Pixel(..), Color(..), Point(..))
 import Clusters (Cluster(..))
 import System.Random
 import Data.List
@@ -54,5 +54,52 @@ getClusters (x:xs) n = do
     clusters <- getClusters xs (n - 1)
     return (Cluster (getPixelsColorAverage pixels) pixels : clusters)
 
+distance :: Color -> Pixel -> Float
+distance (Color d e f) (Pixel pt (Color a b c)) = sqrt ((fromIntegral a - fromIntegral d)**2 + (fromIntegral b - fromIntegral e)**2 + (fromIntegral c - fromIntegral f)**2)
+
+getAverage :: [Pixel] -> Color -> Float
+getAverage list ref = sum $ fmap (distance ref) list
+
+distanceColor :: Color -> Color -> Float
+distanceColor (Color a b c) (Color d e f) = sqrt ((fromIntegral a - fromIntegral d)**2 + (fromIntegral b - fromIntegral e)**2 + (fromIntegral c - fromIntegral f)**2)
+
+isClosest :: Float -> [Cluster] -> Pixel -> Bool
+isClosest _ [] _ = True
+isClosest clusterDistance (x:xs) pixel
+    | distanceColor (clColor x) (piColor pixel) < clusterDistance = True
+    | otherwise = False
+
+getNewCluster :: Cluster -> [Cluster] -> [Pixel] -> Cluster
+getNewCluster cluster _ [] = cluster
+getNewCluster cluster clusters (y:ys) = case isClosest (distanceColor (clColor cluster) (piColor y)) clusters y of
+                                    True -> getNewCluster (Cluster (clColor cluster) ((clPixels cluster) ++ [y])) clusters ys
+                                    False -> getNewCluster cluster clusters ys
+
+comparePixels :: Pixel -> Pixel -> Bool
+comparePixels (Pixel (Point x0 y0) (Color r0 g0 b0)) (Pixel (Point x1 y1) (Color r1 g1 b1)) = x0 == x1 && y0 == y1 && r0 == r1 && g0 == g1 && b0 == b1
+
+getNewClusters :: [Cluster] -> [Pixel] -> [Cluster]
+getNewClusters clusters [] = clusters
+getNewClusters (x:xs) pixels = do
+    let newCluster = getNewCluster (Cluster (clColor x) []) xs pixels
+    let newPixels = filter (\pixel -> length (filter (\clusterPixel -> comparePixels pixel clusterPixel) (clPixels newCluster)) == 0) pixels
+    newCluster : getNewClusters xs newPixels
+
+checkLimit :: [Cluster] -> [Cluster] -> Float -> Bool
+checkLimit [] _ _ = True
+checkLimit (x:xs) (y:ys) limit
+    | maximisedValue < limit = checkLimit xs ys limit
+    | otherwise = False
+    where maximisedValue = abs ((getAverage (clPixels x) (clColor x)) - (getAverage (clPixels y) (clColor y)))
+
+updateUntilConvergence :: [Cluster] -> [Pixel]-> Float -> IO ([Cluster])
+updateUntilConvergence clusters pixels limit = do
+    let newClusters = getNewClusters clusters pixels
+    case checkLimit newClusters clusters limit of
+        True -> return (newClusters)
+        False -> updateUntilConvergence newClusters pixels limit
+
 compressPixels :: [Pixel] -> Int -> Float -> IO ([Cluster])
-compressPixels pixels n _ = getClusters (splitList pixels ((length pixels) `div` n) n) n
+compressPixels pixels n limit = do
+    shuffledClusters <- getClusters (splitList pixels ((length pixels) `div` n) n) n
+    updateUntilConvergence shuffledClusters pixels limit
