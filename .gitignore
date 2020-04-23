@@ -3,3 +3,4 @@
 imageCompressor
 /hie.yaml
 /imagecompressor.cabal
+/app/Bootstrap.hs
