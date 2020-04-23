@@ -33,4 +33,4 @@ data Pixel = Pixel {
 data Cluster = Cluster {
     clColor :: Color,
     clPixels :: [Pixel]
-}
+} deriving (Show)

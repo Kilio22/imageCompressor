@@ -40,9 +40,9 @@ main = do
             print nLimit
             print pixels
 
-            -- let clusters = compressPixels pixels nColors nLimit
+            clusters <- compressPixels pixels nColors nLimit
 
-            print "XD"
+            print clusters
         _ -> error "Wrong arguments"
 
 getPixelsFromFile :: FilePath -> IO (Maybe [Pixel])
