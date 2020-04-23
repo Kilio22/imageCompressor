@@ -36,12 +36,23 @@ getPixels pixelList = do
     pixels <- getPixels (deleteAt randNb pixelList)
     return ([pixelList!!randNb] ++ pixels)
 
+getColorAverage :: [Pixel] -> (Color -> Int) -> Int
+getColorAverage [] _ = 0
+getColorAverage (x:xs) fct = (fct $ piColor x) + getColorAverage xs fct
+
+getPixelsColorAverage :: [Pixel] -> Color
+getPixelsColorAverage pixels = do
+    let redAverage = ceiling $ fromIntegral (getColorAverage pixels r) / fromIntegral (length pixels)
+    let greenAverage = ceiling $ fromIntegral (getColorAverage pixels g) / fromIntegral (length pixels)
+    let blueAverage = ceiling $ fromIntegral (getColorAverage pixels b) / fromIntegral (length pixels)
+    Color redAverage greenAverage blueAverage
+
 getClusters :: [[Pixel]] -> Int -> IO ([Cluster])
 getClusters _ 0 = return ([])
 getClusters (x:xs) n = do
     pixels <- getPixels x
     clusters <- getClusters xs (n - 1)
-    return (Cluster (Color 0 0 0) pixels : clusters)
+    return (Cluster (getPixelsColorAverage pixels) pixels : clusters)
 
 compressPixels :: [Pixel] -> Int -> Float -> IO ([Cluster])
 compressPixels pixels n _ = getClusters (splitList pixels ((length pixels) `div` n) n) n
