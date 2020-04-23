@@ -48,15 +48,20 @@ getPixelsFromFile file = do
     return (sequence fileMbPixels)
 
 readPixel :: String -> Maybe Pixel
-readPixel line = do
-    let [pointStr, colorStr] = words line
-    -- xd <- case length pixelStr of
-    --     2 -> pixelStr
-    --     _ -> Nothing
-    -- let point = Point 0 0
-    -- let color = Color 0 0 0
-    let (px, py) = fromMaybe (error "Bad file format") (readMaybe pointStr :: Maybe (Int, Int))
-    let (cr, cg, cb) = fromMaybe (error "Bad file format") (readMaybe colorStr :: Maybe (Int, Int, Int))
-    let point = Point px py
-    let color = Color cr cg cb
-    Just (Pixel point color)
+readPixel line = case words line of
+    [pointStr, colorStr] -> do
+        let (px, py) = fromMaybe (error "Bad point format") (readMaybe pointStr :: Maybe (Int, Int))
+        let point = Point px py
+
+        let ct = fromMaybe (error "Bad color format") (readMaybe colorStr :: Maybe (Int, Int, Int))
+        let color = fromMaybe (error "Bad color value range") (makeColor ct)
+
+        Just (Pixel point color)
+    _ -> error "Bad line format in file"
+
+makeColor :: (Int, Int, Int) -> Maybe Color
+makeColor (cr, cg, cb)
+    | cr >= 0 && cr <= 255 && cg >= 0 && cg <= 255 && cb >= 0 && cb <= 255
+    = Just (Color cr cg cb)
+    | otherwise
+    = Nothing
