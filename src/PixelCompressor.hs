@@ -76,8 +76,10 @@ getNewClusters :: [Cluster] -> [Pixel] -> [Cluster]
 getNewClusters clusters [] = clusters
 getNewClusters (x:xs) pixels = do
     let newCluster = getNewCluster (Cluster (clColor x) []) xs pixels
-    let newPixels = filter (\pixel -> length (filter (\clusterPixel -> comparePixels pixel clusterPixel) (clPixels newCluster)) == 0) pixels
-    Cluster (getPixelsColorAverage (clPixels newCluster)) (clPixels newCluster) : getNewClusters xs newPixels
+    let newPixels = filter (\pixel -> (length (filter (\clusterPixel -> comparePixels pixel clusterPixel) (clPixels newCluster))) == 0) pixels
+    case length (clPixels newCluster) > 0 of
+            True -> Cluster (getPixelsColorAverage (clPixels newCluster)) (clPixels newCluster) : getNewClusters xs newPixels
+            False -> getNewClusters xs newPixels
 
 checkLimit :: [Cluster] -> [Cluster] -> Float -> Bool
 checkLimit [] _ _ = True
