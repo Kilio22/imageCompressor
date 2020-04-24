@@ -29,11 +29,11 @@ splitList [] _ _ = []
 splitList pixels nbPixelByList it = fst splitedList : splitList (snd splitedList) nbPixelByList (it - 1)
     where splitedList = splitAt nbPixelByList pixels
 
-getPixels :: [Pixel] -> IO ([Pixel])
-getPixels [] = return ([])
-getPixels pixelList = do
+getShuffledPixels :: [Pixel] -> IO ([Pixel])
+getShuffledPixels [] = return ([])
+getShuffledPixels pixelList = do
     randNb <- getRandomIndex pixelList
-    pixels <- getPixels (deleteAt randNb pixelList)
+    pixels <- getShuffledPixels (deleteAt randNb pixelList)
     return (pixelList!!randNb: pixels)
 
 getColorAverage :: [Pixel] -> (Color -> Int) -> Int
@@ -69,14 +69,11 @@ getNewCluster cluster clusters (y:ys) = case isClosest (distance (clColor cluste
                                     True -> getNewCluster (Cluster (clColor cluster) (y : (clPixels cluster))) clusters ys
                                     False -> getNewCluster cluster clusters ys
 
-comparePixels :: Pixel -> Pixel -> Bool
-comparePixels (Pixel (Point x0 y0) (Color r0 g0 b0)) (Pixel (Point x1 y1) (Color r1 g1 b1)) = x0 == x1 && y0 == y1 && r0 == r1 && g0 == g1 && b0 == b1
-
 getNewClusters :: [Cluster] -> [Pixel] -> [Cluster]
 getNewClusters clusters [] = clusters
 getNewClusters (x:xs) pixels = do
     let newCluster = getNewCluster (Cluster (clColor x) []) xs pixels
-    let newPixels = filter (\pixel -> (length (filter (\clusterPixel -> comparePixels pixel clusterPixel) (clPixels newCluster))) == 0) pixels
+    let newPixels = filter (\pixel -> ((filter (\clusterPixel -> pixel == clusterPixel) (clPixels newCluster))) == []) pixels
     case length (clPixels newCluster) > 0 of
             True -> Cluster (getPixelsColorAverage (clPixels newCluster)) (clPixels newCluster) : getNewClusters xs newPixels
             False -> getNewClusters xs newPixels
@@ -97,6 +94,6 @@ updateUntilConvergence clusters pixels limit = do
 
 compressPixels :: [Pixel] -> Int -> Float -> IO ([Cluster])
 compressPixels pixels n limit = do
-    shuffledPixels <- getPixels pixels
+    shuffledPixels <- getShuffledPixels pixels
     let shuffledClusters = createShuffledClusters (splitList shuffledPixels ((length shuffledPixels) `div` n) n) n
     updateUntilConvergence shuffledClusters pixels limit
