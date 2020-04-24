@@ -47,31 +47,25 @@ getPixelsColorAverage pixels = do
     let blueAverage = ceiling $ fromIntegral (getColorAverage pixels b) / fromIntegral (length pixels)
     Color redAverage greenAverage blueAverage
 
-getClusters :: [[Pixel]] -> Int -> IO ([Cluster])
-getClusters _ 0 = return ([])
-getClusters (x:xs) n = do
-    pixels <- getPixels x
-    clusters <- getClusters xs (n - 1)
-    return (Cluster (getPixelsColorAverage pixels) pixels : clusters)
+createShuffledClusters :: [[Pixel]] -> Int -> [Cluster]
+createShuffledClusters _ 0 = []
+createShuffledClusters (x:xs) n = Cluster (getPixelsColorAverage x) x : createShuffledClusters xs (n - 1)
 
-distance :: Color -> Pixel -> Float
-distance (Color a b c) (Pixel pt (Color d e f)) = sqrt ((fromIntegral a - fromIntegral d)**2 + (fromIntegral b - fromIntegral e)**2 + (fromIntegral c - fromIntegral f)**2)
+distance :: Color -> Color -> Float
+distance (Color a b c) (Color d e f) = sqrt ((fromIntegral a - fromIntegral d)**2 + (fromIntegral b - fromIntegral e)**2 + (fromIntegral c - fromIntegral f)**2)
 
 getAverage :: [Pixel] -> Color -> Float
-getAverage list ref = (sum $ fmap (distance ref) list) / (fromIntegral (length list))
-
-distanceColor :: Color -> Color -> Float
-distanceColor (Color a b c) (Color d e f) = sqrt ((fromIntegral a - fromIntegral d)**2 + (fromIntegral b - fromIntegral e)**2 + (fromIntegral c - fromIntegral f)**2)
+getAverage list ref = (sum $ fmap (\pixel -> distance ref (piColor pixel)) list) / (fromIntegral (length list))
 
 isClosest :: Float -> [Cluster] -> Pixel -> Bool
 isClosest _ [] _ = True
 isClosest clusterDistance (x:xs) pixel
-    | distanceColor (clColor x) (piColor pixel) < clusterDistance = True
+    | distance (clColor x) (piColor pixel) < clusterDistance = True
     | otherwise = False
 
 getNewCluster :: Cluster -> [Cluster] -> [Pixel] -> Cluster
 getNewCluster cluster _ [] = cluster
-getNewCluster cluster clusters (y:ys) = case isClosest (distanceColor (clColor cluster) (piColor y)) clusters y of
+getNewCluster cluster clusters (y:ys) = case isClosest (distance (clColor cluster) (piColor y)) clusters y of
                                     True -> getNewCluster (Cluster (clColor cluster) ((clPixels cluster) ++ [y])) clusters ys
                                     False -> getNewCluster cluster clusters ys
 
@@ -101,5 +95,6 @@ updateUntilConvergence clusters pixels limit = do
 
 compressPixels :: [Pixel] -> Int -> Float -> IO ([Cluster])
 compressPixels pixels n limit = do
-    shuffledClusters <- getClusters (splitList pixels ((length pixels) `div` n) n) n
+    shuffledPixels <- getPixels pixels
+    let shuffledClusters = createShuffledClusters (splitList shuffledPixels ((length shuffledPixels) `div` n) n) n
     updateUntilConvergence shuffledClusters pixels limit
