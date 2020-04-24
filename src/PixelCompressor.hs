@@ -12,7 +12,7 @@ module PixelCompressor
     ) where
 
 import DataTypes (Pixel(..), Color(..), Point(..))
-import Clusters (Cluster(..))
+import Clusters (Cluster(..), printClusters)
 import System.Random
 import Data.List
 
@@ -34,7 +34,7 @@ getPixels [] = return ([])
 getPixels pixelList = do
     randNb <- getRandomIndex pixelList
     pixels <- getPixels (deleteAt randNb pixelList)
-    return ([pixelList!!randNb] ++ pixels)
+    return (pixelList!!randNb: pixels)
 
 getColorAverage :: [Pixel] -> (Color -> Int) -> Int
 getColorAverage [] _ = 0
@@ -55,10 +55,10 @@ getClusters (x:xs) n = do
     return (Cluster (getPixelsColorAverage pixels) pixels : clusters)
 
 distance :: Color -> Pixel -> Float
-distance (Color d e f) (Pixel pt (Color a b c)) = sqrt ((fromIntegral a - fromIntegral d)**2 + (fromIntegral b - fromIntegral e)**2 + (fromIntegral c - fromIntegral f)**2)
+distance (Color a b c) (Pixel pt (Color d e f)) = sqrt ((fromIntegral a - fromIntegral d)**2 + (fromIntegral b - fromIntegral e)**2 + (fromIntegral c - fromIntegral f)**2)
 
 getAverage :: [Pixel] -> Color -> Float
-getAverage list ref = sum $ fmap (distance ref) list
+getAverage list ref = (sum $ fmap (distance ref) list) / (fromIntegral (length list))
 
 distanceColor :: Color -> Color -> Float
 distanceColor (Color a b c) (Color d e f) = sqrt ((fromIntegral a - fromIntegral d)**2 + (fromIntegral b - fromIntegral e)**2 + (fromIntegral c - fromIntegral f)**2)
@@ -83,14 +83,14 @@ getNewClusters clusters [] = clusters
 getNewClusters (x:xs) pixels = do
     let newCluster = getNewCluster (Cluster (clColor x) []) xs pixels
     let newPixels = filter (\pixel -> length (filter (\clusterPixel -> comparePixels pixel clusterPixel) (clPixels newCluster)) == 0) pixels
-    newCluster : getNewClusters xs newPixels
+    Cluster (getPixelsColorAverage (clPixels newCluster)) (clPixels newCluster) : getNewClusters xs newPixels
 
 checkLimit :: [Cluster] -> [Cluster] -> Float -> Bool
 checkLimit [] _ _ = True
 checkLimit (x:xs) (y:ys) limit
     | maximisedValue < limit = checkLimit xs ys limit
     | otherwise = False
-    where maximisedValue = abs ((getAverage (clPixels x) (clColor x)) - (getAverage (clPixels y) (clColor y)))
+    where maximisedValue = (abs (getAverage (clPixels x) (clColor x)) - (getAverage (clPixels y) (clColor y)))
 
 updateUntilConvergence :: [Cluster] -> [Pixel]-> Float -> IO ([Cluster])
 updateUntilConvergence clusters pixels limit = do
