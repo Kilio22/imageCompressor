@@ -66,7 +66,7 @@ isClosest clusterDistance (x:xs) pixel
 getNewCluster :: Cluster -> [Cluster] -> [Pixel] -> Cluster
 getNewCluster cluster _ [] = cluster
 getNewCluster cluster clusters (y:ys) = case isClosest (distance (clColor cluster) (piColor y)) clusters y of
-                                    True -> getNewCluster (Cluster (clColor cluster) ((clPixels cluster) ++ [y])) clusters ys
+                                    True -> getNewCluster (Cluster (clColor cluster) (y : (clPixels cluster))) clusters ys
                                     False -> getNewCluster cluster clusters ys
 
 comparePixels :: Pixel -> Pixel -> Bool
