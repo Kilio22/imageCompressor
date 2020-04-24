@@ -60,8 +60,8 @@ getAverage list ref = (sum $ fmap (\pixel -> distance ref (piColor pixel)) list)
 isClosest :: Float -> [Cluster] -> Pixel -> Bool
 isClosest _ [] _ = True
 isClosest clusterDistance (x:xs) pixel
-    | distance (clColor x) (piColor pixel) < clusterDistance = True
-    | otherwise = False
+    | distance (clColor x) (piColor pixel) < clusterDistance = False
+    | otherwise = isClosest clusterDistance xs pixel
 
 getNewCluster :: Cluster -> [Cluster] -> [Pixel] -> Cluster
 getNewCluster cluster _ [] = cluster
@@ -82,9 +82,9 @@ getNewClusters (x:xs) pixels = do
 checkLimit :: [Cluster] -> [Cluster] -> Float -> Bool
 checkLimit [] _ _ = True
 checkLimit (x:xs) (y:ys) limit
-    | maximisedValue < limit = checkLimit xs ys limit
+    | (abs averageDifference) < limit = checkLimit xs ys limit
     | otherwise = False
-    where maximisedValue = (abs (getAverage (clPixels x) (clColor x)) - (getAverage (clPixels y) (clColor y)))
+    where averageDifference = (getAverage (clPixels x) (clColor x)) - (getAverage (clPixels y) (clColor y))
 
 updateUntilConvergence :: [Cluster] -> [Pixel]-> Float -> IO ([Cluster])
 updateUntilConvergence clusters pixels limit = do
