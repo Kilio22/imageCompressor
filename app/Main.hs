@@ -7,7 +7,9 @@
 
 module Main where
 
+import           System.Exit
 import           System.Environment             ( getArgs )
+import           System.IO
 import           Data.List                      ( sortOn )
 import           Data.Maybe                     ( listToMaybe
                                                 , fromMaybe
@@ -23,41 +25,58 @@ import           Clusters                       ( Cluster
                                                 )
 
 import           PixelCompressor                ( compressPixels )
+import           Control.Exception
 
 main :: IO ()
 main = do
     args <- getArgs
     case args of
         [nColorsStr, nLimitStr, file] -> do
-            let nColors = fromMaybe (error "Bad 'n' parameter") (readMaybe nColorsStr :: Maybe Int)
-            let nLimit = fromMaybe (error "Bad 'e' parameter") (readMaybe nLimitStr :: Maybe Float)
+            nColors <- case readMaybe nColorsStr :: Maybe Int of
+                Nothing -> hPutStrLn stderr "Bad 'n' parameter" >> exitWith (ExitFailure 84)
+                Just n -> return n
+            nLimit <- case readMaybe nLimitStr :: Maybe Float of
+                Nothing -> hPutStrLn stderr "Bad 'e' parameter" >> exitWith (ExitFailure 84)
+                Just n -> return n
 
             mbPixels <- getPixelsFromFile file
-            let pixels = fromMaybe (error "Bad 'file' paramter") mbPixels
+            pixels   <- case mbPixels of
+                Nothing -> hPutStrLn stderr "Bad 'file' paramter" >> exitWith (ExitFailure 84)
+                Just p -> return p
 
             clusters <- compressPixels pixels nColors nLimit
 
             printClusters clusters
-        _ -> error "Wrong arguments"
+        _ -> hPutStrLn stderr "Wrong parameter count (2 required)"
+            >> exitWith (ExitFailure 84)
 
 getPixelsFromFile :: FilePath -> IO (Maybe [Pixel])
 getPixelsFromFile file = do
-    fileContents <- readFile file
+    fileContents <- catch
+        (readFile file)
+        (\e -> do
+            let err = show (e :: IOException)
+            hPutStrLn stderr "Couldn't open file"
+            return ""
+        )
+
     let fileLines    = lines fileContents
     let fileMbPixels = fmap readPixel fileLines
-    return (sequence fileMbPixels)
+    case length fileMbPixels of
+        0 -> return Nothing
+        _ -> return (sequence fileMbPixels)
 
 readPixel :: String -> Maybe Pixel
 readPixel line = case words line of
     [pointStr, colorStr] -> do
-        let (px, py) = fromMaybe (error "Bad point format") (readMaybe pointStr :: Maybe (Int, Int))
+        (px, py) <- readMaybe pointStr :: Maybe (Int, Int)
         let point = Point px py
 
-        let ct = fromMaybe (error "Bad color format") (readMaybe colorStr :: Maybe (Int, Int, Int))
-        let color = fromMaybe (error "Bad color value range") (makeColor ct)
+        ct    <- readMaybe colorStr :: Maybe (Int, Int, Int)
+        color <- makeColor ct
 
         Just (Pixel point color)
-    _ -> error "Bad line format in file"
+    _ -> Nothing
 
 makeColor :: (Int, Int, Int) -> Maybe Color
 makeColor (cr, cg, cb)
