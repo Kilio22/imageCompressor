@@ -67,20 +67,24 @@ isClosest clusterDistance (x:xs) pixel
     | distance (clColor x) (piColor pixel) < clusterDistance = False
     | otherwise = isClosest clusterDistance xs pixel
 
-getNewCluster :: Cluster -> [Cluster] -> [Pixel] -> Cluster
-getNewCluster cluster _ [] = cluster
-getNewCluster cluster clusters (y:ys) = case isClosest (distance (clColor cluster) (piColor y)) clusters y of
-                                    True -> getNewCluster (Cluster (clColor cluster) (y : (clPixels cluster))) clusters ys
-                                    False -> getNewCluster cluster clusters ys
+closest :: [Pixel] -> Color -> [Pixel]
+closest list ref = sortOn (\pixel -> distance ref (piColor pixel)) list
+
+getNewCluster :: Cluster -> [Cluster] -> [Pixel] -> [Pixel] -> (Cluster, [Pixel])
+getNewCluster cluster _ [] [] = (cluster, [])
+getNewCluster cluster clusters [] pixels = getNewCluster cluster clusters (closest (take 200 pixels) (clColor cluster)) (drop 200 pixels)
+getNewCluster cluster clusters (y:ys) pixels = case isClosest (distance (clColor cluster) (piColor y)) clusters y of
+                                    True -> getNewCluster (Cluster (clColor cluster) (y : (clPixels cluster))) clusters ys pixels
+                                    False -> (cluster, (y : ys) ++ pixels)
 
 getNewClusters :: [Cluster] -> [Pixel] -> [Cluster]
 getNewClusters clusters [] = clusters
 getNewClusters (x:xs) pixels = do
-    let newCluster = getNewCluster (Cluster (clColor x) []) xs pixels
-    let newPixels = filter (\pixel -> ((filter (\clusterPixel -> pixel == clusterPixel) (clPixels newCluster))) == []) pixels
-    case length (clPixels newCluster) > 0 of
-            True -> Cluster (getPixelsColorAverage (clPixels newCluster)) (clPixels newCluster) : getNewClusters xs newPixels
-            False -> getNewClusters xs newPixels
+    let closestPixels = closest (take 200 pixels) (clColor x)
+    let newCluster = getNewCluster (Cluster (clColor x) []) xs closestPixels (drop 200 pixels)
+    case (clPixels (fst newCluster)) == [] of
+            True -> getNewClusters xs (snd newCluster)
+            False -> Cluster (getPixelsColorAverage (clPixels (fst newCluster))) (clPixels (fst newCluster)) : getNewClusters xs (snd newCluster)
 
 checkLimit :: [Cluster] -> [Cluster] -> Float -> Bool
 checkLimit [] _ _ = True
