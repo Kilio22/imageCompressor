@@ -70,19 +70,34 @@ isClosest clusterDistance (x:xs) pixel
 closest :: [Pixel] -> Color -> [Pixel]
 closest list ref = sortOn (\pixel -> distance ref (piColor pixel)) list
 
-getNewCluster :: Cluster -> [Cluster] -> [Pixel] -> [Pixel] -> (Cluster, [Pixel])
-getNewCluster cluster _ [] [] = (cluster, [])
-getNewCluster cluster clusters [] pixels = getNewCluster cluster clusters (closest (take 200 pixels) (clColor cluster)) (drop 200 pixels)
-getNewCluster cluster clusters (y:ys) pixels = case isClosest (distance (clColor cluster) (piColor y)) clusters y of
-                                    True -> getNewCluster (Cluster (clColor cluster) (y : (clPixels cluster))) clusters ys pixels
-                                    False -> (cluster, (y : ys) ++ pixels)
+-- getNewCluster :: Cluster -> [Cluster] -> [Pixel] -> [Pixel] -> (Cluster, [Pixel])
+-- getNewCluster cluster _ [] [] = (cluster, [])
+-- getNewCluster cluster clusters [] pixels = getNewCluster cluster clusters (closest (take 200 pixels) (clColor cluster)) (drop 200 pixels)
+-- getNewCluster cluster clusters (y:ys) pixels = case isClosest (distance (clColor cluster) (piColor y)) clusters y of
+--                                     True -> getNewCluster (Cluster (clColor cluster) (y : (clPixels cluster))) clusters ys pixels
+--                                     False -> (cluster, (y : ys) ++ pixels)
+
+-- getNewClusters :: [Cluster] -> [Pixel] -> [Cluster]
+-- getNewClusters clusters [] = clusters
+-- getNewClusters (x:xs) pixels = do
+--     let closestPixels = closest (take 200 pixels) (clColor x)
+--     let newCluster = getNewCluster (Cluster (clColor x) []) xs closestPixels (drop 200 pixels)
+--     case (clPixels (fst newCluster)) == [] of
+--             True -> getNewClusters xs (snd newCluster)
+--             False -> Cluster (getPixelsColorAverage (clPixels (fst newCluster))) (clPixels (fst newCluster)) : getNewClusters xs (snd newCluster)
+
+getNewCluster :: Cluster -> [Cluster] -> [Pixel] -> (Cluster, [Pixel])
+getNewCluster cluster _ [] = (cluster, [])
+getNewCluster cluster clusters (y:ys) = case isClosest (distance (clColor cluster) (piColor y)) clusters y of
+                                    True -> getNewCluster (Cluster (clColor cluster) (y : (clPixels cluster))) clusters ys
+                                    False -> (cluster, y : ys)
 
 getNewClusters :: [Cluster] -> [Pixel] -> [Cluster]
 getNewClusters clusters [] = clusters
 getNewClusters (x:xs) pixels = do
-    let closestPixels = closest (take 200 pixels) (clColor x)
-    let newCluster = getNewCluster (Cluster (clColor x) []) xs closestPixels (drop 200 pixels)
-    case (clPixels (fst newCluster)) == [] of
+    let closestPixels = closest pixels (clColor x)
+    let newCluster = getNewCluster (Cluster (clColor x) []) xs closestPixels
+    case clPixels (fst newCluster) == [] of
             True -> getNewClusters xs (snd newCluster)
             False -> Cluster (getPixelsColorAverage (clPixels (fst newCluster))) (clPixels (fst newCluster)) : getNewClusters xs (snd newCluster)
 
