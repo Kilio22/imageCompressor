@@ -20,8 +20,12 @@ deleteAt :: Int -> [Pixel] -> [Pixel]
 deleteAt idx pixels = xs ++ ys
     where (xs, (_:ys)) = splitAt idx pixels
 
-getRandomIndex :: [Pixel] -> IO (Int)
-getRandomIndex pixels = newStdGen >>= (\randomSeed -> return (fst $ randomR (0, (length pixels) - 1) randomSeed))
+getRandomIndex :: [Pixel] -> Int -> IO (Int)
+getRandomIndex pixels listSize = do
+    randomSeed <- newStdGen
+    case listSize > 200 of
+        True -> return (fst $ randomR (0, 200) randomSeed)
+        False -> return (fst $ randomR (0, listSize - 1) randomSeed)
 
 splitList :: [Pixel] -> Int -> Int -> [[Pixel]]
 splitList pixels _ 1 = [pixels]
@@ -29,11 +33,11 @@ splitList [] _ _ = []
 splitList pixels nbPixelByList it = fst splitedList : splitList (snd splitedList) nbPixelByList (it - 1)
     where splitedList = splitAt nbPixelByList pixels
 
-getShuffledPixels :: [Pixel] -> IO ([Pixel])
-getShuffledPixels [] = return ([])
-getShuffledPixels pixelList = do
-    randNb <- getRandomIndex pixelList
-    pixels <- getShuffledPixels (deleteAt randNb pixelList)
+getShuffledPixels :: [Pixel] -> Int -> IO ([Pixel])
+getShuffledPixels [] 0 = return ([])
+getShuffledPixels pixelList listSize = do
+    randNb <- getRandomIndex pixelList listSize
+    pixels <- getShuffledPixels (deleteAt randNb pixelList) (listSize - 1)
     return (pixelList!!randNb: pixels)
 
 getColorAverage :: [Pixel] -> (Color -> Int) -> Int
@@ -94,6 +98,6 @@ updateUntilConvergence clusters pixels limit = do
 
 compressPixels :: [Pixel] -> Int -> Float -> IO ([Cluster])
 compressPixels pixels n limit = do
-    shuffledPixels <- getShuffledPixels pixels
+    shuffledPixels <- getShuffledPixels pixels (length pixels)
     let shuffledClusters = createShuffledClusters (splitList shuffledPixels ((length shuffledPixels) `div` n) n) n
     updateUntilConvergence shuffledClusters pixels limit
