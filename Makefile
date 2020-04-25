@@ -23,4 +23,7 @@ re: fclean all
 debug:
 	@stack ghci
 
+profile:
+	@stack build --copy-bins --local-bin-path . --profile
+
 .PHONY: all clean fclean re debug
