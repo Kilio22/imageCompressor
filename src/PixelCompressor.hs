@@ -73,17 +73,15 @@ updateClusters (x:xs) = case (clPixels x) == [] of
                                 True -> updateClusters xs
                                 False -> (Cluster (getPixelsColorAverage (clPixels x)) (clPixels x)) : updateClusters xs
 
-getNewCluster :: [Cluster] -> Pixel -> [Cluster]
-getNewCluster [] _ = []
-getNewCluster (x:xs) pixel = case isClosest (distance (clColor x) (piColor pixel)) xs pixel of
-                                    False -> x : getNewCluster xs pixel
+putPixel :: [Cluster] -> Pixel -> [Cluster]
+putPixel [] _ = []
+putPixel (x:xs) pixel = case isClosest (distance (clColor x) (piColor pixel)) xs pixel of
+                                    False -> x : putPixel xs pixel
                                     True -> (Cluster (clColor x) (pixel : (clPixels x))) : xs
 
 getNewClusters :: [Cluster] -> [Pixel] -> [Cluster]
 getNewClusters clusters [] = clusters
-getNewClusters clusters (x:xs) = do
-    let newClusters = getNewCluster clusters x
-    getNewClusters newClusters xs
+getNewClusters clusters (x:xs) = getNewClusters (putPixel clusters x) xs
 
 resetClusters :: [Cluster] -> [Cluster]
 resetClusters [] = []
@@ -98,8 +96,7 @@ checkLimit (x:xs) (y:ys) limit
 
 updateUntilConvergence :: [Cluster] -> [Pixel]-> Float -> IO ([Cluster])
 updateUntilConvergence clusters pixels limit = do
-    let resetedClusters = resetClusters clusters
-    let newClusters = updateClusters $ getNewClusters resetedClusters pixels
+    let newClusters = updateClusters $ getNewClusters (resetClusters clusters) pixels
     case checkLimit newClusters clusters limit of
         True -> return (newClusters)
         False -> updateUntilConvergence newClusters pixels limit
