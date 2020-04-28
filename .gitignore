@@ -5,3 +5,5 @@ imageCompressor
 /imagecompressor.cabal
 /app/Bootstrap.hs
 /useless/
+/subject.txt
+*.prof
