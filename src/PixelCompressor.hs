@@ -55,13 +55,13 @@ createShuffledClusters :: [[Pixel]] -> Int -> [Cluster]
 createShuffledClusters _ 0 = []
 createShuffledClusters (x:xs) n = Cluster (getPixelsColorAverage x) x : createShuffledClusters xs (n - 1)
 
-distance :: Color -> Color -> Float
-distance (Color a b c) (Color d e f) = sqrt ((fromIntegral a - fromIntegral d)**2 + (fromIntegral b - fromIntegral e)**2 + (fromIntegral c - fromIntegral f)**2)
+distance :: Color -> Color -> Int
+distance (Color a b c) (Color d e f) = (a - d)^2 + (b - e)^2 + (c - f)^2
 
-getAverage :: [Pixel] -> Color -> Float
-getAverage list ref = (sum $ fmap (\pixel -> distance ref (piColor pixel)) list) / (fromIntegral (length list))
+getAverage :: [Pixel] -> Color -> Int
+getAverage list ref = (sum $ fmap (\pixel -> distance ref (piColor pixel)) list) `div` (length list)
 
-isClosest :: Float -> [Cluster] -> Pixel -> Bool
+isClosest :: Int -> [Cluster] -> Pixel -> Bool
 isClosest _ [] _ = True
 isClosest clusterDistance (x:xs) pixel
     | distance (clColor x) (piColor pixel) < clusterDistance = False
@@ -90,7 +90,7 @@ resetClusters (x:xs) = (Cluster (clColor x) []) : resetClusters xs
 checkLimit :: [Cluster] -> [Cluster] -> Float -> Bool
 checkLimit [] _ _ = True
 checkLimit (x:xs) (y:ys) limit
-    | (abs averageDifference) < limit = checkLimit xs ys limit
+    | (fromIntegral (abs averageDifference)) < limit = checkLimit xs ys limit
     | otherwise = False
     where averageDifference = (getAverage (clPixels x) (clColor x)) - (getAverage (clPixels y) (clColor y))
 
@@ -105,4 +105,4 @@ compressPixels :: [Pixel] -> Int -> Float -> IO ([Cluster])
 compressPixels pixels n limit = do
     shuffledPixels <- getShuffledPixels pixels (length pixels)
     let shuffledClusters = createShuffledClusters (splitList shuffledPixels ((length shuffledPixels) `div` n) n) n
-    updateUntilConvergence shuffledClusters pixels limit
+    updateUntilConvergence shuffledClusters pixels (limit^2)
