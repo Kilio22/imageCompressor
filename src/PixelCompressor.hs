@@ -23,8 +23,8 @@ deleteAt idx pixels = xs ++ ys
 getRandomIndex :: [Pixel] -> Int -> IO (Int)
 getRandomIndex pixels listSize = do
     randomSeed <- newStdGen
-    case listSize > 200 of
-        True -> return (fst $ randomR (0, 200) randomSeed)
+    case listSize > 100 of
+        True -> return (fst $ randomR (0, 100) randomSeed)
         False -> return (fst $ randomR (0, listSize - 1) randomSeed)
 
 splitList :: [Pixel] -> Int -> Int -> [[Pixel]]
